@@ -4931,6 +4931,7 @@ public class StandardContext extends ContainerBase
         }
 
         // Post work directory
+        // 生成work目录
         postWorkDirectory();
 
         // Add missing components as necessary

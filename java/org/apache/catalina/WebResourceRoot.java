@@ -81,6 +81,16 @@ import java.util.Set;
  *   resource came from
  * - how to handle PUT when the target is read-only but it could be written to
  *   a higher priority ResourceSet that is read-write
+ *
+ *  资源可以分为4类
+ *  1. pre资源
+ *  在Context.xml文件配置<PreResource></PreResource>
+ *  2. main资源
+ *  WEB-INF下的lib以及classes文件夹
+ *  3. Jar资源
+ *  <JarResource></JarResource>
+ *  4. post资源
+ *  <PostResource></PostResource>
  */
 public interface WebResourceRoot extends Lifecycle {
     /**
