@@ -420,6 +420,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                 channel.setIOChannel(socket);
                 channel.reset();
             }
+            // 将channel注册到poller上
             getPoller0().register(channel);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -463,6 +464,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             while (running) {
 
                 // Loop if endpoint is paused
+                // 在运行过程中，如果EndPoint暂停了，那么Acceptor线程就会进入自选状态
                 while (paused && running) {
                     state = AcceptorState.PAUSED;
                     try {
@@ -472,6 +474,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     }
                 }
 
+                // 如果EndPoint终止运行，那么Acceptor也将终止
                 if (!running) {
                     break;
                 }
@@ -486,6 +489,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     try {
                         // Accept the next incoming connection from the server
                         // socket
+                        // 接收连接的socket
                         socket = serverSock.accept();
                     } catch (IOException ioe) {
                         // We didn't get a socket

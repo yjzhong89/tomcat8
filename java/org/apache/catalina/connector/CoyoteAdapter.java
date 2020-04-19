@@ -336,13 +336,15 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
-            // 在mapper中解析客户端请求
+            // 在mapper中解析客户端请求，该方法会出现代理服务器，设置必要的header等操作，用来处理请求映射
+            // TODO
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // 调用容器中pipeline的第一个valve的invoke方法，从这里开始真正开始对请求进行处理
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }
@@ -373,7 +375,12 @@ public class CoyoteAdapter implements Adapter {
                     request.getAsyncContextInternal().setErrorState(throwable, true);
                 }
             } else {
+                // 通过request的finishRequest以及response的finishResponse(将outputBuffer中的数据刷到浏览器中)来完成整个请求
                 request.finishRequest();
+                //将org.apache.catalina.connector.Response对应的OutputBuffer中的数据
+                //刷到 org.apache.coyote.Response 对应的 InternalOutputBuffer 中
+                //并且最终调用socket对应的outputStream将数据刷出去
+                //这里会组装 Http Response 中的 header 与 body 里面的数据, 并且刷到远端
                 response.finishResponse();
             }
 
@@ -630,11 +637,13 @@ public class CoyoteAdapter implements Adapter {
             // Parse the path parameters. This will:
             //   - strip out the path parameters
             //   - convert the decodedURI to bytes
+            // 去除RUI中分号表示的路径参数
             parsePathParameters(req, request);
 
             // URI decoding
             // %xx decoding of the URL
             try {
+                // 这里的解码只是移除百分号，计算百分号后两位的十六进制数字值来替代原来的三位百分号编码
                 req.getURLDecoder().convert(decodedURI, false);
             } catch (IOException ioe) {
                 response.sendError(400, "Invalid URI: " + ioe.getMessage());
@@ -642,6 +651,7 @@ public class CoyoteAdapter implements Adapter {
             // Normalization
             if (normalize(req.decodedURI())) {
                 // Character decoding
+                // 将URI的字节转换为字符表示
                 convertURI(decodedURI, request);
                 // Check that the URI is still normalized
                 if (!checkNormalize(req.decodedURI())) {
@@ -695,6 +705,8 @@ public class CoyoteAdapter implements Adapter {
 
         while (mapRequired) {
             // This will map the the latest version by default
+            // 在Service启动的时候，MapperListener注册了该Service中所有的Host以及Context
+            // 根据URI选择Context时，将解码后的URL与每个Context的路径去比较
             connector.getService().getMapper().map(serverName, decodedURI,
                     version, request.getMappingData());
 
