@@ -750,6 +750,7 @@ public class StandardWrapper extends ContainerBase
         // If not SingleThreadedModel, return the same instance every time
         if (!singleThreadModel) {
             // Load and initialize our instance if necessary
+            // 在这里使用了双重检测模式，但是instance必须定义为volatile类型的
             if (instance == null || !instanceInitialized) {
                 synchronized (this) {
                     if (instance == null) {

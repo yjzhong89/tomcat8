@@ -71,6 +71,7 @@ final class StandardEngineValve extends ValveBase {
         throws IOException, ServletException {
 
         // Select the Host to be used for this Request
+        // StandardHost
         Host host = request.getHost();
         if (host == null) {
             response.sendError

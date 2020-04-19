@@ -98,6 +98,7 @@ final class StandardWrapperValve
         Throwable throwable = null;
         // This should be a Request attribute...
         long t1=System.currentTimeMillis();
+        // 增加请求次数
         requestCount.incrementAndGet();
         StandardWrapper wrapper = (StandardWrapper) getContainer();
         Servlet servlet = null;
@@ -129,6 +130,7 @@ final class StandardWrapperValve
         }
 
         // Allocate a servlet instance to process this request
+        // Servlet默认是在第一次请求的时候进行实例化
         try {
             if (!unavailable) {
                 // 通过wrapper生成一个servlet
@@ -170,6 +172,7 @@ final class StandardWrapperValve
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
         // Create the filter chain for this request
+        // 为请求创建过滤器链
         ApplicationFilterChain filterChain =
                 ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);
 
@@ -264,6 +267,7 @@ final class StandardWrapperValve
             // Deallocate the allocated servlet instance
             try {
                 if (servlet != null) {
+                    // 将servlet回收到servlet实例池里面
                     wrapper.deallocate(servlet);
                 }
             } catch (Throwable e) {

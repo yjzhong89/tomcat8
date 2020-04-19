@@ -305,12 +305,14 @@ public class CoyoteAdapter implements Adapter {
 
         if (request == null) {
             // Create objects
+            // 通过connector创建request和response
             request = connector.createRequest();
             request.setCoyoteRequest(req);
             response = connector.createResponse();
             response.setCoyoteResponse(res);
 
             // Link objects
+            // 将request和response连接起来，一对一
             request.setResponse(response);
             response.setRequest(request);
 
@@ -334,6 +336,7 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
+            // 在mapper中解析客户端请求
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
