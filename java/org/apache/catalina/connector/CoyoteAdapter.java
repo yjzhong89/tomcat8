@@ -728,14 +728,19 @@ public class CoyoteAdapter implements Adapter {
             // (if any). Need to do this before we redirect in case we need to
             // include the session id in the redirect
             String sessionID;
+            // 是否支持通过URI尾缀JSessionId的方式来追踪Session的变化(默认是支持的)
             if (request.getServletContext().getEffectiveSessionTrackingModes()
                     .contains(SessionTrackingMode.URL)) {
 
                 // Get the session ID if there was one
+                // 从URI尾缀的参数中拿取jsessionId的数据
+                // SessionConfig.getSessionUriParamName是获取对应cookie的名字
+                // 默认jsessionId，可以在web.xml里面进行定义
                 sessionID = request.getPathParameter(
                         SessionConfig.getSessionUriParamName(
                                 request.getContext()));
                 if (sessionID != null) {
+                    // 如果从URI里面获取了jsessionId，则直接赋值给request
                     request.setRequestedSessionId(sessionID);
                     request.setRequestedSessionURL(true);
                 }
@@ -743,6 +748,7 @@ public class CoyoteAdapter implements Adapter {
 
             // Look for session ID in cookies and SSL session
             try {
+                // 通过cookie获取JSessionId的值
                 parseSessionCookiesId(request);
             } catch (IllegalArgumentException e) {
                 // Too many cookies
@@ -752,6 +758,8 @@ public class CoyoteAdapter implements Adapter {
                 }
                 return true;
             }
+
+            // 在SSL模式下获取JSessionId的值
             parseSessionSslId(request);
 
             sessionID = request.getRequestedSessionId();
@@ -1034,6 +1042,8 @@ public class CoyoteAdapter implements Adapter {
         // from a parent context with a session ID may be present which would
         // overwrite the valid session ID encoded in the URL
         Context context = request.getMappingData().context;
+
+        // Tomcat是否支持通过cookie机制跟踪session
         if (context != null && !context.getServletContext()
                 .getEffectiveSessionTrackingModes().contains(
                         SessionTrackingMode.COOKIE)) {
@@ -1041,21 +1051,30 @@ public class CoyoteAdapter implements Adapter {
         }
 
         // Parse session id from cookies
+        // 获取 Cookie的实际引用对象
+        // 此时还没有触发Cookie解析，即serverCookies里面是空数据，数据还只是存储在http header中
         ServerCookies serverCookies = request.getServerCookies();
+        // 在这里触发了解析Header里面的数据
         int count = serverCookies.getCookieCount();
         if (count <= 0) {
             return;
         }
 
+        // 获取sessionId的名称JSessionId
         String sessionCookieName = SessionConfig.getSessionCookieName(context);
 
+        // 轮询所有解析出来的Cookie
         for (int i = 0; i < count; i++) {
             ServerCookie scookie = serverCookies.getCookie(i);
+            // 比较Cookie的名称是否是jsessionId
             if (scookie.getName().equals(sessionCookieName)) {
                 // Override anything requested in the URL
+                // 是否jsessionId还没有解析(并且只将第一个解析成功的值set进去)
                 if (!request.isRequestedSessionIdFromCookie()) {
                     // Accept only the first session id cookie
+                    // 将MessageBytes转成char
                     convertMB(scookie.getValue());
+                    // 设置jsessionId的值
                     request.setRequestedSessionId
                         (scookie.getValue().toString());
                     request.setRequestedSessionCookie(true);
@@ -1065,6 +1084,7 @@ public class CoyoteAdapter implements Adapter {
                             request.getRequestedSessionId());
                     }
                 } else {
+                    // 若Cookie里面存在好几个 jsessionid,则进行覆盖
                     if (!request.isRequestedSessionIdValid()) {
                         // Replace the session id until one is valid
                         convertMB(scookie.getValue());
